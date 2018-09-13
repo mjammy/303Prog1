@@ -1,0 +1,151 @@
+CSE303 - Fall 2018
+Assignment #1: Attacklab 2: Electric Boogaloo
+
+Purpose and General Guidelines:
+
+	We typically do not write code that makes system calls directly. Instead, we usually rely on a library (the "C standard library") to wrap system calls in stub code that abstracts away differences among possible underlying operating systems. This greatly simplifies programming.
+
+	In order to increase security, we typically store the C standard library as a shared object (a .so file in Unix, a .dll in Windows). If a bug or security flaw is found in the library, we can simply replace it, and all programs will get the new version when they are executed.
+
+	Anyone with shell access can override the default location of a shared library. This is, for example, one way to implement tools like valgrind: we can override the locations of malloc and free, replacing them with special versions that count and track memory, and then call the original malloc and free. This technique is known as library interpositioning.
+
+	There is a dark side, though. Anyone with shell access can override the default location of a shared library! This opens the door to "userland rootkits", which can hijack the I/O of a program by sitting between the program and the kernel.
+
+	In this project, we will create a very simple userland rootkit. The rootkit will be simpler than what a person with malicious intent would use, but it allows us to appreciate aspects of security, trust, and protection via hands-on experience. As the assignment progresses, you will be expected to attack a given application as well as use interpositioning for improvements. As you do so, we encourage you to think about the "cat and mouse" game that ensues. The attack you create could be circumvented, once the defender learns of it. But the counter could also be circumvented, back and forth, for quite some time.
+
+	Note, too, that even though it won't be covered formally much in this assignment, library interpositioning is a powerful technique for making extensible code. This isn't just about doing evil things... loading code on the fly is the key to high-availability customizable web servers and other tools.
+  
+	This is a team assignment. Students will be permitted to work in groups of upto three (no mixing of undergraduate and graduate students). Every bit of code that a team submits as part of this assignment should be their own work. You may consult question-and-answer websites such as StackOverflow to see how other people have tried, failed, and then received assistance in their attempts at these and similar problems. However, you may not use other people's code. Be conservative in your judgment.  Anything on GitHub is obviously off limits. Anything written by your classmates is off limits. By this point in your academic career, you should know how to be ethical.
+
+Getting the Files:
+
+	The source code that you will be editing can be found in the ~jloew/CSE303/ folder on the Sunlab machines.  From your Sunlab account, you should make a protected folder where you will work on this project, then copy the source code and unpack it. You should know how to do this by now, but just in case you don't, here is a sequence of commands that should work, once you are logged into the sunlab:
+  
+	cd ~
+	mkdir cse303
+	chmod 700 cse303
+	cd cse303
+	tar -xzvf ~jloew/CSE303/cse303_p1.tgz
+
+	This will create a subfolder with the project 1 source code in it. The assignment requires you to edit the files in the folder to complete several tasks.
+
+Setup:
+
+	You are expected to be using gcc-7.1.0. On the Sunlab machines you can type "module load gcc-7.1.0" to use gcc-7.1.0 for the current session. You can add that command to your "~/.profile" file if you want this to automatically happen for all successive Sunlab sessions.
+
+Task #0: Tell us who you are
+
+You should edit the 'team.c' file to provide the name and email of each member of your team. Until you do this, none of your programs will execute.
+  
+Task #1: Explore mechanisms for loading shared objects
+
+	The "libpart1.c" file contains a simple function. When it compiles, it complies to a shared object (a ".so") that can be loaded into a program at run-time, or dynamically linked at load time.
+
+	1 - Your first sub-task is to learn a bit about the difference between run-time and load-time use of shared objects.  We have provided some starter code called libpart1.c and part1a.c. The Makefile will build libpart1.c to a shared object, such that its methods can be invoked by part1a. This entails the use of the "-L" and "-l" flags at link time, so that the compiler can ensure that the function names expected by part1a are present in libpart1. It also entails the use of the LD_LIBRARY_PATH environment variable to tell the run-time loader where to find libpart1.so, since we are not putting it in a standard location. We do this for you: the Makefile has a special rule for the part1a executable, and part1a.sh will execute your part1a code with the environment correctly configured.
+
+		With that as background, notice the signature of the "hello()" function in libpart1.c. It takes a void*, and it returns a void*. By packaging the paramters as structs, it is possible to use this one signature for any behavior, via some careful casting.
+
+		To complete part1a, you should add a new function to libpart1 called 'ucase'. It should have the same signature as 'hello', but it should expect that it is given the address of a team struct as its parameter. Internally, ucase should (1) allocate a new team struct, (2) copy the fields of the parameter struct to the fields of the new team struct, and then (3) uppercase those fields. You should also modify part1a.c so that it (1) prints the contents of the new struct, in a manner similar to check_team(), and (2) takes appropriate action to ensure there are no memory leaks reported by valgrind.
+
+	2 - Your second sub-task is to explore mechanisms for dynamic loading of shared objects. The part1b.c file contains an incomplete function called load_and_invoke(). You will need to modify the getopt code in main(), and then modify load_and_invoke(), so that it uses dlopen(), dlsym(), and dlclose() to load a shared object, execute a function, and close the shared object. Be sure to handle errors correctly. You should test this function using, at a minimum, the same "libpart1.so" file from the first sub-task. You should be able to get hello() to execute from your part1b executable without modifying the Makefile or modifying LD_LIBRARY_PATH.
+
+Task #2: Implement interpositioning
+
+	Interpositioning is the mechanism by which we have two .so files which provide the same dynamically-linked function name, and one of the versions of the function makes use of the other. The trick to doing this is to use the dlsym()  function with a special handle, RTLD_NEXT, to indicate that the .so to use can be found by traversing the library path. We will apply this to a "banking" program to accomplish various goals.
+
+	For all interpositioned functions, your implementation must provide the following functionality:
+
+		- You should interposition but still ultimately call the original functions. Except where explicitly part of the assignment or it makes no sense to.
+  
+		- Do not interposition on the following functions: fileno, exit, _exit, exit_group, strerror, signal, fcntl, time, system, pthread_create, pthread_join, pthread_exit, and pthread_kill.
+
+		- Do not alter any strings that start with "STATUS". These will only happen with calls to fprintf. You are highly likely to not even need to worry about this.
+
+		- Do not require any changes to the Makefile.
+
+		- You should complete part2.cpp, such that you can maintain state and provide functionality. When your .so is unloaded, you should use a destructor to deallocate any state to avoid a memory leak. You may use C++ objects here as long as they are handled correctly.
+
+	Putting it all together, it should be possible to LD_PRELOAD your libpart2.so file, and run an arbitrary program. Your shared object will then replace existing functionality that the a program expects.
+
+		LD_PRELOAD=obj64/libpart2.so <executable>
+      
+		Note: You can use the "__attribute__((constructor))" and "__attribute__((destructor))" annotations to indicate that a specific function in your .so should run when the .so is loaded or unloaded.
+
+		Note: It's silly to write data structures in C when they are already available in C++ in a highly-optimized form. For that purpose, we are going to use a small amount of C++ to simplify the data structure aspects of this assignment. You will need to complete the wrapper code in part2.cpp so that it correctly uses some C++ data structure(s) that you will use in order to complete the assignment.
+
+		Note: It is possible that your interpositioned functions will inadvertently call themselves. You may need to use a static flag within your functions such that you do not end up with infinite recursion.
+
+	This task will have your manipulating an existing executable called banker. The banker has eight modes that you will use interpositioning to interact with, you may be attacking or assisting the program.
+
+		Note: objdump will provide you a list of all of the relevant dynamic functions being used by this the banker.
+
+		Note: You will probably find "strace" to be useful.
+
+	The program is run with a given task number [0..9] as the first and only command-line argument. Run the program with the libpart2.so file to accomplish the tasks.
+
+		LD_PRELOAD=obj64/libpart2.so ./banker <test>
+
+	It is possible that we may have to update the banker executable, if so, it will be made available at ~jloew/CSE303/banker
+
+	When the banker is run, it will open a file using the first command line argument given. You can use that information in your solution to determine what test case you need to handle.
+
+		0  - This initializes the data set. It creates 8 ".data" files that contain the balances of eight different accounts (the 8th account is not given any money, as it is the hacker's account). These are saved very insecurely, as plain text files in the directory that you run banker. You don't need to do anything for this task, but it resets the dataset to the baseline which we will do between tasks.
+
+		9  - This outputs account statuses in a more easily readable form. It will output the data in the encrypted files as well, if they exist. You don't need to do anything for this phase either.
+
+			Note: The accounts are listed in the order they are stored within the banker. You may find that information useful.
+
+		1  - The banker will ask for a password for user student. Use interpositioning to hijack the functions related to checking the password in order to solve for the password. Specifically, when fscanf is called to read the password, hijack it, put the password in and return (the prompt should never even happen - there should be no delay, a message will be reported if there is a noticable delay). The following shows exactly how the request is written in banker's source code:
+
+			printf("Please enter the password for user %s: ", username);
+			char *password = NULL;
+			fscanf(stdin, "%ms", &password);
+
+			You will need to look up how to handle variadic functions for this. No other use of fscanf in the program will use "%ms" as the format string. Be aware that part of the password can change but is always solved for by the banker (before prompting the user and can be derived from a system call that banker uses) and you should reproduce that in order to solve the password.
+
+			Note: This case assumes all the accounts have just been initialized.
+
+		2  - The banker will load the accounts of Alice and Bob. It will then transfer $100 from Alice to Bob. Use interpositioning to instead cause Bob to give $100 to Alice.
+
+			The results of this might only be seen when you look at the respective data files for Alice and Bob. That's fine.
+
+		4  -  The banker will randomly open two accounts (but not the hacker account) and transfer a small amount between them. Whenever a transfer will be made, skim some portion off of it and send it to the hacker account, If you skim too much, the bank may notice it. The banker will continue to make transfers until the accounts have too little money at which point it'll stop and print out the total number of transfers made. 
+
+			Note: Until you skim part of the transfers, this code may take a long time to run.
+
+		5  -  The banker will act similarly to part 4 but it includes the hacker account in the possible choices it makes. Do not skim any money, interposition the randomizer to get as much money as possible moved to the hacker account.
+
+		7  -  Same as case 4 but you will save use interpositioning to provide encryption for the files. If the banker tries to access an account, use the encrypted version with a ".enc" extension, if it exists, otherwise, create the encrypted version from the unencrypted version and give that to the banker. When the banker attempts to make changes or read data, it is unaware of the encryption, use interpositioning to make the translation process invisible to the banker. For encryption, use a crappy XOR model, take the XOR of the bytes that comprise the account name (so "bob.data" XOR the characters in "bob") and use that to XOR each byte to generate the "encrypted" value. Leave the original, unencrypted file alone. 
+
+		8  -  The banker has gone crazy and is spawning processes that randomly call one of the following tests [1,2,4,5,6,7]. The designer did not take any concurrency into account and the spawned processes will clash with each other. You need to fix this. The easiest solution is to use interpositioning to force the banker to run each child processes sequentially (The banker is not checking things all too carefully).
+
+		3  - The banker will do a bunch of transfers between accounts. Your job is to fake the file system. When the banker requests to open a file, do not actually open it, pretend you opened it. Since you can interposition all file I/O, whenever the banker tries to use the file that you never opened, you can handle it and fake a valid response. For the fake account, use the data from the actual account (you can open/read/close it). When the banker closes a fake file, make sure the updated value ends up in the real file.
+
+			WARNING: This phase will not run properly until you do interpositioning, the code tests, using fcntl, that the actual files are not open.
+
+			This test will require a lot of interpositioning and planning. Be careful. Once you interposition, you may no longer see the function in system call trace. It may also be very difficult to use a debugger (valgrind should be ok but you might have problems trying to use gdb). If you do any output debugging, make sure to either print to stderr or use cerr.
+
+		6  -  The banker will spawn a new process of itself to manage subbankers. Each subbanker will be assigned one of the seven baseline accounts (not hacker). It will use pipes and pipe communication to make transfers amongst the accounts. Intercept these and steal a small portion of each transfer (send this to hacker, which will always be the last set of pipes created). Output whenever you steal a portion and who would have gotten that money.
+
+			Note: You are solving for this particular instance of the problem. A generic solution is non-trivial.
+
+	You will be given a baseline set of code that interpositions malloc and keeps track of the allocations in a simple manner. That provides the skeleton code necessary for you to work with.
+
+
+Issues:
+
+	Make sure to use "module load gcc-7.1.0"
+
+	You will almost certainly have a memory leak of 72,704 bytes in 1 blocks. You can ignore that memory leak. You must deal with other memory leaks.
+
+	In your shared object, while you are allowed to use C++ data types, do not declare the actual objects, use a pointer and assign it to NULL. Let the shared library constructor and destructor handle assigning them memory and deallocation, otherwise, you may have problems and valgrind errors.
+
+Submission Instructions:
+
+	To turn in your solutions, type 'make submit'.
+
+	You may turn in your solutions as many times as you like. The last submission received before grading begins is the only submission that will be graded.
+
+	Any task whose code does not compile will receive 0 points.
+    
+	If you choose to work in a team, please perform all submissions from the same account.
