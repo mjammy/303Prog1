@@ -14,4 +14,3 @@ void *hello(void *input)
 	printf("hello from a .so\n");
 	return NULL;
 }
-
