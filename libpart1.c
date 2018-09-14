@@ -14,6 +14,7 @@ void *hello(void *input)
 	printf("hello from a .so\n");
 	return NULL;
 }
+<<<<<<< HEAD
 
 void *ucase(char *progname) {
 
@@ -75,3 +76,5 @@ void *ucase(char *progname) {
 
 	return &newTeam;
 }
+=======
+>>>>>>> ac03c2e238057fd7eb3bd63c42069413f24da756
