@@ -15,3 +15,63 @@ void *hello(void *input)
 	return NULL;
 }
 
+void *ucase(char *progname) {
+
+	// Allocate a new team struct
+	struct team_t newTeam;
+
+	// copy the fields of the parameter struct to the fields of the new team struct
+	newTeam.name1 = team.name1;
+	newTeam.email1 = team.email1;
+	newTeam.name2 = team.name2;
+	newTeam.email2 = team.email2;
+	newTeam.name3 = team.name3;
+	newTeam.email3 = team.email3;
+
+	// uppercase those fields
+	char *s;
+
+	s = newTeam.name1;
+	while (*s) {
+		*s = toupper((unsigned char) *s);
+		s++;
+	}
+	newTeam.name1 = s;
+
+	s = newTeam.email1;
+	while (*s) {
+		*s = toupper((unsigned char) *s);
+		s++;
+	}
+	newTeam.email1 = s;
+
+	s = newTeam.name2;
+	while (*s) {
+		*s = toupper((unsigned char) *s);
+		s++;
+	}
+	newTeam.name2 = s;
+
+	s = newTeam.email2;
+	while (*s) {
+		*s = toupper((unsigned char) *s);
+		s++;
+	}
+	newTeam.email2 = s;
+
+	s = newTeam.name3;
+	while (*s) {
+		*s = toupper((unsigned char) *s);
+		s++;
+	}
+	newTeam.name3 = s;
+
+	s = newTeam.email3;
+	while (*s) {
+		*s = toupper((unsigned char) *s);
+		s++;
+	}
+	newTeam.email3 = s;
+
+	return &newTeam;
+}

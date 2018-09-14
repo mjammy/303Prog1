@@ -14,6 +14,9 @@ void help(char *progname)
 /* declare the hello() function that lives in a shared library */
 extern void *hello(void* param);
 
+/*  */
+extern void *ucase(void* param);
+
 /* main() - The main routine parses arguments and invokes hello */
 int main(int argc, char **argv)
 {
@@ -36,6 +39,15 @@ int main(int argc, char **argv)
 	hello(NULL);
 
 	/* TODO: execute the new function "ucase" that you added to libpart1.c */
+
+	struct team_t *teamPrint = ucase(argv[0]);
+	printf("Student 1 : %s\n", teamPrint->name1);
+	printf("Email 1   : %s\n", teamPrint->email1);
+	printf("Student 2 : %s\n", teamPrint->name2);
+	printf("Email 2   : %s\n", teamPrint->email2);
+	printf("Student 3 : %s\n", teamPrint->name3);
+	printf("Email 3   : %s\n", teamPrint->email3);
+	printf("\n");
 
 	return 0;
 }
