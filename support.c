@@ -16,16 +16,9 @@ void check_team(char * progname)
 		printf("%s: Please fill in the team struct in team.c\n", progname);
 		exit(1);
 	}
-	if((strcmp("", team.name3) == 0) || (strcmp("", team.email3) == 0))
-	{
-		printf("%s: Please fill in the team struct in team.c\n", progname);
-		exit(1);
-	}
 	printf("Student 1 : %s\n", team.name1);
 	printf("Email 1   : %s\n", team.email1);
 	printf("Student 2 : %s\n", team.name2);
 	printf("Email 2   : %s\n", team.email2);
-	printf("Student 3 : %s\n", team.name3);
-	printf("Email 3   : %s\n", team.email3);
 	printf("\n");
 }

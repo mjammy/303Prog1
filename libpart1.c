@@ -15,63 +15,52 @@ void *hello(void *input)
 	return NULL;
 }
 
-void *ucase(char *progname) {
+void *ucase(void *input) {
 
-	// Allocate a new team struct
-	struct team_t newTeam;
+	// Cast void pointer to struct pointer
+
+	struct team_t *input_team = (struct team_t *)input;
+	struct team_t *upper_team = malloc(sizeof(struct team_t));
 
 	// copy the fields of the parameter struct to the fields of the new team struct
-	newTeam.name1 = team.name1;
-	newTeam.email1 = team.email1;
-	newTeam.name2 = team.name2;
-	newTeam.email2 = team.email2;
-	newTeam.name3 = team.name3;
-	newTeam.email3 = team.email3;
+	upper_team->name1 = malloc(sizeof(input_team->name2));
+	upper_team->email1 = malloc(sizeof(input_team->email2));
+	upper_team->name2 = malloc(sizeof(input_team->name2));
+	upper_team->email2 = malloc(sizeof(input_team->email2));
 
-	// uppercase those fields
-	char *s;
 
-	s = newTeam.name1;
-	while (*s) {
-		*s = toupper((unsigned char) *s);
-		s++;
+	// capitalize name1
+	int i = 0;
+	while(input_team->name1[i]){
+		upper_team->name1[i] = toupper(input_team->name1[i]);
+		i++;
 	}
-	newTeam.name1 = s;
 
-	s = newTeam.email1;
-	while (*s) {
-		*s = toupper((unsigned char) *s);
-		s++;
+	// capitalize email1
+	int j = 0;
+	while(input_team->email1[j]){
+		upper_team->email1[j] = toupper(input_team->email1[j]);
+		j++;
 	}
-	newTeam.email1 = s;
 
-	s = newTeam.name2;
-	while (*s) {
-		*s = toupper((unsigned char) *s);
-		s++;
+	// capitalize name2
+	int k = 0;
+	while(input_team->name2[k]){
+		upper_team->name2[k] = toupper(input_team->name2[k]);
+		k++;
 	}
-	newTeam.name2 = s;
 
-	s = newTeam.email2;
-	while (*s) {
-		*s = toupper((unsigned char) *s);
-		s++;
+	// capitalize email2
+	int l = 0;
+	while(input_team->email2[l]){
+		upper_team->email2[l] = toupper(input_team->email2[l]);
+		l++;
 	}
-	newTeam.email2 = s;
 
-	s = newTeam.name3;
-	while (*s) {
-		*s = toupper((unsigned char) *s);
-		s++;
-	}
-	newTeam.name3 = s;
+	printf("Student 1 : %s\n", upper_team->name1);
+	printf("Email 1 : %s\n", upper_team->email1);
+	printf("Student 2 : %s\n", upper_team->name2);
+	printf("Email 2 : %s\n", upper_team->email2);
 
-	s = newTeam.email3;
-	while (*s) {
-		*s = toupper((unsigned char) *s);
-		s++;
-	}
-	newTeam.email3 = s;
-
-	return &newTeam;
+	return NULL;
 }

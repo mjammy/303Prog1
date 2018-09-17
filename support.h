@@ -10,8 +10,6 @@ extern struct team_t
 	char *email1;
 	char *name2;
 	char *email2;
-	char *name3;
-	char *email3;
 } team;
 
 /* This function verifies that the team name is filled out */
