@@ -15,12 +15,6 @@ void *hello(void *input)
 	return NULL;
 }
 
-// MUSA PUT IN THIS FUNCTION TO HELP TEST LDSYM()
-void test() {
-	printf("we made it fam🙏🙏🙏🙏🙏🙏🙏🙏\n");
-}
-
-
 void *ucase(void *input) {
 
 	// Cast void pointer to struct pointer

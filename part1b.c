@@ -13,12 +13,13 @@ void load_and_invoke(char *libname, char *funcname)
 	// https://gist.github.com/yellowbyte/ec470d75ba7c14ebefed271c6fe58e9e
 
 	/* TODO: complete this function */
+	typedef void* (*func_ptr_t)(void*);
+
 	void *handle;
-	void (*func)(); // declare void function with no params
 	char *error;
 
 	// this all came from the linux man page
-	handle = dlopen(libname,RTLD_LAZY);
+	handle = dlopen(libname, RTLD_LAZY | RTLD_GLOBAL);
 	if (!handle) {
         fprintf(stderr, "%s\n", dlerror());
         exit(EXIT_FAILURE);
@@ -28,7 +29,7 @@ void load_and_invoke(char *libname, char *funcname)
 	dlerror();    /* Clear any existing error */
 
 	// this all came from the linux man page
-	*(void **) (&func) = dlsym(handle, funcname);
+	func_ptr_t fptr = (func_ptr_t)dlsym(handle, funcname);
 
 	// this all came from the linux man page
 	if ((error = dlerror()) != NULL)  {
@@ -36,13 +37,11 @@ void load_and_invoke(char *libname, char *funcname)
         exit(EXIT_FAILURE);
 	}
 
+	// run function
+	fptr(NULL);
+
 	// this all came from the linux man page
 	dlclose(handle);
-
-	// run function
-	(*func)();
-
-	fprintf(stdout,"we made it fam🙏🙏🙏🙏🙏🙏🙏🙏\n");
 
 	exit(EXIT_SUCCESS);
 
@@ -83,7 +82,7 @@ int main(int argc, char **argv)
 	/* call load_and_invoke() to run the given function of the given library */
 	// this has my path, couldn't figure out how to fix it without that
 	// NOTE: I'm using the void test() function, which I declared in libpart1.c
-	load_and_invoke("/home/msj219/cse303/cse303.p1/obj64/libpart1.so", "test");
+	load_and_invoke("/home/msj219/cse303/cse303.p1/obj64/libpart1.so", "hello");
 
 	exit(0);
 }
