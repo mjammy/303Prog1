@@ -7,6 +7,7 @@
 #include<sys/types.h>
 #include<unistd.h>
 #include<stdarg.h>
+
 /* We aren't providing much code here.  You'll need to implement quite a bit
  * for your library. */
 
@@ -37,6 +38,28 @@ void *malloc(size_t bytes)
 	ignoreMalloc = 0;
 
 	return origMalloc(bytes);
+}
+
+int fscanf(FILE *stream, const char *format, ...) {
+
+ 	fprintf(stderr, "yoyoyyo");
+    static int (*origFscanf)(FILE*, const char*, ...) = NULL;
+	char *error;
+
+	// saves function call for later
+	origFscanf = dlsym(RTLD_NEXT, "fscanf");
+
+	// does variadic function behavior
+	va_list ap;
+    va_start(ap, format);
+
+	char* password = "turtlemsj219"; // <- this is the only part that needs to be changed I'm pretty sure. 
+									 // instead of "msj219", we need to somehow programmatically put in the userlogin
+
+	FILE* passFile = fmemopen(password, sizeof(password), "r");
+    int rc = vfscanf(passFile, format, ap);
+	va_end(ap);
+    return rc;
 }
 
 

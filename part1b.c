@@ -66,22 +66,17 @@ int main(int argc, char **argv)
 	check_team(argv[0]);
 
 
-	//	MUSA commented this command line options part out
-	//  We can worry about implementing the args when it works
-	//
 	/* parse the command-line options. For this program, we only support */
 	/* the parameterless 'h' option, for getting help on program usage.  */
-/* 	while((opt = getopt(argc, argv, "h")) != -1)
+	while((opt = getopt(argc, argv, "h")) != -1)
 	{
 		switch(opt)
 		{
 		case 'h':	help(argv[0]); 	break;
 		}
-	} */
+	}
 
 	/* call load_and_invoke() to run the given function of the given library */
-	// this has my path, couldn't figure out how to fix it without that
-	// NOTE: I'm using the void test() function, which I declared in libpart1.c
 	load_and_invoke("/home/msj219/cse303/cse303.p1/obj64/libpart1.so", "hello");
 
 	exit(0);
