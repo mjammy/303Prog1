@@ -40,27 +40,66 @@ void *malloc(size_t bytes)
 	return origMalloc(bytes);
 }
 
+
+
+
+
 int fscanf(FILE *stream, const char *format, ...) {
 
- 	fprintf(stderr, "yoyoyyo");
-    static int (*origFscanf)(FILE*, const char*, ...) = NULL;
-	char *error;
+  //static int (*origFscanf)(FILE*, const char*, ...) = NULL;
 
 	// saves function call for later
-	origFscanf = dlsym(RTLD_NEXT, "fscanf");
+	//origFscanf = (int(*)(FILE*, const char*, ...))dlsym(RTLD_NEXT, "fscanf");
+	//origFscanf = dlsym(RTLD_NEXT, "fscanf");
 
 	// does variadic function behavior
+	int rc;
 	va_list ap;
-    va_start(ap, format);
+	va_start(ap, format);
 
-	char* password = "turtlemsj219"; // <- this is the only part that needs to be changed I'm pretty sure. 
-									 // instead of "msj219", we need to somehow programmatically put in the userlogin
+	if (strcmp(format, "%ms") == 0) {
 
-	FILE* passFile = fmemopen(password, sizeof(password), "r");
-    int rc = vfscanf(passFile, format, ap);
+		// Get password
+		char *turtleString = "turtle";
+		char *username = getlogin();
+
+		size_t size = (strlen(username)+strlen(turtleString))*sizeof(char);
+		char *password = (char*)malloc(size);
+	  if ( password != NULL )
+	  {
+	     //strcpy(password, turtleString);
+	     //strcat(password, username);
+
+			 memcpy(password, turtleString, strlen(turtleString));
+			 memcpy(password + strlen(turtleString)*sizeof(char), username, strlen(username));
+			 //memcpy(password + (strlen(turtleString) + strlen(username))*sizeof(char), "\0", 2);
+	  }
+
+		FILE* passFile = fmemopen(password, strlen(password), "r");
+
+		/*
+    char * buffer = malloc(12*sizeof(char));
+		fread(buffer, 1, 12, passFile);
+		 //  printf("%s\n", buffer);
+
+		fseek ( passFile , 0 , SEEK_SET );
+		*/
+		//printf("%s",  password, size );
+  //  stream = &passFile;
+		//int rc = vsscanf(password, format, ap);
+
+	  rc = vfscanf(passFile, format, ap);
+	}
+	else {
+		rc = vfscanf(stream, format, ap);
+		va_end(ap);
+	}
+
 	va_end(ap);
-    return rc;
+	return rc;
+
 }
+
 
 
 __attribute__((destructor))
@@ -76,4 +115,3 @@ static void allocate()
 {
 	so_allocate();
 }
-
