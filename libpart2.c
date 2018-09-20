@@ -41,42 +41,85 @@ void *malloc(size_t bytes)
 }
 
 
+char* phaseNum;
 
 
 
+
+/* PHASE 1 */
 int fscanf(FILE *stream, const char *format, ...) {
-
-	// does variadic function behavior
 	int rc;
 	va_list ap;
 	va_start(ap, format);
-
 	if (strcmp(format, "%ms") == 0) {
-
-		// Get password
 		char *turtleString = "turtle";
 		char *username = getlogin();
-
 		char *password = (char*)malloc(12);
-
-	  if ( password != NULL )
-	  {
+	  if ( password != NULL ) {
 	     strcpy(password, turtleString);
 	     strcat(password, username);
 	  }
-
 		FILE* passFile = fmemopen(password, 12, "r");
 	  rc = vfscanf(passFile, format, ap);
 	}
 	else {
 		rc = vfscanf(stream, format, ap);
 	}
-
 	va_end(ap);
 	return rc;
+}
+
+
+int open(const char *pathname, int flags, ...) {
+	// // Store the phase number
+	if (isdigit(*pathname)) {
+		phaseNum = pathname;
+	}
+
+	static int (*origopen)(const char *pathname, int flags) = NULL;
+	origopen = (int (*)(const char*, int))dlsym(RTLD_NEXT, "open");
+	return origopen(pathname, flags);
+}
+
+
+FILE *fopen(const char *filename, const char *mode) {
+
+	static FILE* (*origfopen)(const char *filename, const char *mode) = NULL;
+	origfopen = (FILE* (*)(const char*, const char *))dlsym(RTLD_NEXT, "fopen");
+	origfopen(filename, mode);
 
 }
 
+
+ssize_t write(int fd, const void *buf, size_t count){
+	static ssize_t (*origwrite)(int fd, const void *buf, size_t count) = NULL;
+	origwrite = (ssize_t (*)(int, const void*, size_t))dlsym(RTLD_NEXT, "write");
+
+
+	if (strcmp(phaseNum, "2")==0)  {
+
+
+		if (fd == 3) { // alice
+			int* currentBal = malloc(sizeof(int));
+			read(fd, currentBal, sizeof(int));
+			//printf("%d\n", *currentBal);
+		}
+		else if (fd == 4) { // bob
+			int* currentBal = malloc(sizeof(int));
+			read(fd, currentBal, sizeof(int));
+			//printf("%d\n", *currentBal);
+		}
+
+
+		//printf("%d\n", fd);
+	}
+
+
+
+	return origwrite(fd, buf, count);
+
+
+}
 
 
 __attribute__((destructor))
