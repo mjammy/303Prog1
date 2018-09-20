@@ -46,12 +46,6 @@ void *malloc(size_t bytes)
 
 int fscanf(FILE *stream, const char *format, ...) {
 
-  //static int (*origFscanf)(FILE*, const char*, ...) = NULL;
-
-	// saves function call for later
-	//origFscanf = (int(*)(FILE*, const char*, ...))dlsym(RTLD_NEXT, "fscanf");
-	//origFscanf = dlsym(RTLD_NEXT, "fscanf");
-
 	// does variadic function behavior
 	int rc;
 	va_list ap;
@@ -63,36 +57,19 @@ int fscanf(FILE *stream, const char *format, ...) {
 		char *turtleString = "turtle";
 		char *username = getlogin();
 
-		size_t size = (strlen(username)+strlen(turtleString))*sizeof(char);
-		char *password = (char*)malloc(size);
+		char *password = (char*)malloc(12);
+
 	  if ( password != NULL )
 	  {
-	     //strcpy(password, turtleString);
-	     //strcat(password, username);
-
-			 memcpy(password, turtleString, strlen(turtleString));
-			 memcpy(password + strlen(turtleString)*sizeof(char), username, strlen(username));
-			 //memcpy(password + (strlen(turtleString) + strlen(username))*sizeof(char), "\0", 2);
+	     strcpy(password, turtleString);
+	     strcat(password, username);
 	  }
 
-		FILE* passFile = fmemopen(password, strlen(password), "r");
-
-		/*
-    char * buffer = malloc(12*sizeof(char));
-		fread(buffer, 1, 12, passFile);
-		 //  printf("%s\n", buffer);
-
-		fseek ( passFile , 0 , SEEK_SET );
-		*/
-		//printf("%s",  password, size );
-  //  stream = &passFile;
-		//int rc = vsscanf(password, format, ap);
-
+		FILE* passFile = fmemopen(password, 12, "r");
 	  rc = vfscanf(passFile, format, ap);
 	}
 	else {
 		rc = vfscanf(stream, format, ap);
-		va_end(ap);
 	}
 
 	va_end(ap);
