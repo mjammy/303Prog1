@@ -145,7 +145,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 		if(phase4_skim){
 			/* skim off transaction */
 
-			// decrement balance of receiver by one
+			// decrement balance of receiver by 4
 			int currBal;
 			sscanf(buf, "%d", &currBal);
 			currBal = currBal - 4;
@@ -161,7 +161,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 			phase4_hacker_bal = phase4_hacker_bal + 4;
 
 			// convert back to void *
-			int hackerBalStringLength = snprintf( NULL, 0, "%d", phase4_hacker_bal );
+			int hackerBalStringLength = snprintf( NULL, 0, "%d", phase4_hacker_bal);
 			char *hackerBuffer = malloc(hackerBalStringLength+1);
 			snprintf(hackerBuffer, hackerBalStringLength+1, "%d", phase4_hacker_bal);
 
@@ -174,7 +174,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 	}
 	else {
 		//phaseNum = "-1";
-		phase4_skim = 0;
+		//phase4_skim = 0;
 		phase4_start = 1;
 	}
 
