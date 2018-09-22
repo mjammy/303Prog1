@@ -37,7 +37,7 @@ extern "C"
 	{
 		for(auto& data : *malloc_data)
 		{
-			printf("Allocations made: %ld.\n", data);
+			//printf("Allocations made: %ld.\n", data);
 		}
 	}
 

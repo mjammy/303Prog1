@@ -61,6 +61,9 @@ int main(int argc, char **argv)
 {
 	/* for getopt */
 	long opt;
+	char* runPath = NULL;
+	char* functionName = NULL;
+	int run = 1;
 
 	/* run a student name check */
 	check_team(argv[0]);
@@ -68,16 +71,20 @@ int main(int argc, char **argv)
 
 	/* parse the command-line options. For this program, we only support */
 	/* the parameterless 'h' option, for getting help on program usage.  */
-	while((opt = getopt(argc, argv, "h")) != -1)
+	while((opt = getopt(argc, argv, "hl:f:")) != -1)
 	{
 		switch(opt)
 		{
-		case 'h':	help(argv[0]); 	break;
+			case 'h':	help(argv[0]); run = 0; break;
+			case 'l':	runPath = optarg; 	break;
+			case 'f':	functionName = optarg; 	break;
 		}
 	}
 
+	// "/home/msj219/cse303/cse303.p1/obj64/libpart1.so"
+
 	/* call load_and_invoke() to run the given function of the given library */
-	load_and_invoke("/home/msj219/cse303/cse303.p1/obj64/libpart1.so", "hello");
+	if(run) load_and_invoke(runPath, functionName);
 
 	exit(0);
 }
