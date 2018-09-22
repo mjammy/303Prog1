@@ -42,7 +42,7 @@ void *malloc(size_t bytes)
 }
 
 
-char* phaseNum;
+char* phaseNum = "-1";
 
 
 
@@ -73,10 +73,21 @@ int fscanf(FILE *stream, const char *format, ...) {
 }
 
 
+
 int open(const char *pathname, int flags, ...) {
 
 	static int (*origopen)(const char *pathname, int flags,...) = NULL;
 	origopen = (int (*)(const char*, int, ...))dlsym(RTLD_NEXT, "open");
+
+	// /* PHASE 5 */
+	// if (strcmp(phaseNum, "5") == 0) {
+	// 	if (phase5_isHacker) {
+	// 		int rc = origopen("hacker.data", flags, 0600);
+	// 		printf("file descriptor: %d\n", rc);
+	// 		return rc;
+	// 	}
+	// 	phase5_isHacker = !phase5_isHacker;
+	// }
 
 	// Store the phase number
 	if (isdigit(*pathname)) {
@@ -113,7 +124,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 	static ssize_t (*origwrite)(int fd, const void *buf, size_t count) = NULL;
 	origwrite = (ssize_t (*)(int, const void*, size_t))dlsym(RTLD_NEXT, "write");
 
-	if (strcmp(phaseNum, "2")==0)  {
+	if (strcmp(phaseNum, "2")==0) {
 
 		if (fd == 4) { // alice
 			int currBal = atoi((char*)buf);
@@ -133,7 +144,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 	}
 
 	/* PHASE 4 */
-	if (strcmp(phaseNum, "4")==0)  {
+	if (strcmp(phaseNum, "4")==0) {
 		if (phase4_start) {
 			int hackerFd = open("hacker.data", 2, 0600);
 			char* hackerBuffer = malloc(5);
@@ -142,7 +153,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 			free(hackerBuffer);
 			phase4_start = 0;
 		}
-		if(phase4_skim){
+		if(phase4_skim) {
 			/* skim off transaction */
 
 			// decrement balance of receiver by one
@@ -172,13 +183,22 @@ ssize_t write(int fd, const void *buf, size_t count) {
 		}
 		phase4_skim = !phase4_skim;
 	}
-	else {
-		//phaseNum = "-1";
-		phase4_skim = 0;
-		phase4_start = 1;
-	}
 
 	return origwrite(fd, buf, count);
+}
+
+int phase5_isHacker = 0;
+long int random() {
+	static long int (*origRandom)() = NULL;
+	origRandom = (long int (*)())dlsym(RTLD_NEXT, "random");
+
+	if (strcmp(phaseNum, "5") == 0) {
+		if (phase5_isHacker) {
+			return 2007395863;
+		}
+		phase5_isHacker = !phase5_isHacker;
+	}
+	return origRandom();
 }
 
 
